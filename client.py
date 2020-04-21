@@ -8,11 +8,13 @@ HEADER = 64
 PORT = 5050
 ''' Set the ip of local server '''
 
-SERVER = '#'
+SERVER = '192.168.43.88'
 ADDR = (SERVER,PORT)
 client = socket.socket(socket.AF_INET,socket.SOCK_STREAM)
 client.connect(ADDR)
 print('[SUCCESS] Succesfully connected to ',ADDR)
+nickname = input('Nickname (Max 256 chars): ').encode(FORMAT)
+client.send(nickname)
 connected = True
 
 def recieving():
@@ -23,8 +25,8 @@ def recieving():
 	if msg_length:
 		msg_length = int(msg_length)
 		msg = client.recv(msg_length).decode(FORMAT)
-		print('\r'+msg+'\nSend : ',end='')
-	
+		print('\r'+msg+'\nYou : ',end='')
+
 
 
 
@@ -42,15 +44,15 @@ def send(msg):
 		client.close()
 		return False
 	return True
-	
+
 def user_msgs():
 	while connected:
 		recieving()
-	
+
 def chat():
 	global connected
 	while connected:
-		msg = input('Send : ')
+		msg = input('You : ')
 		o = send(msg)
 		if not o:
 			connected = False

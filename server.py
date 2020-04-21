@@ -1,6 +1,7 @@
 import socket
 import threading
-
+import random
+import string
 
 ''' Initializing variables '''
 
@@ -8,6 +9,8 @@ DISCONNECT = '!!F'
 FORMAT = 'utf-8'
 HEADER = 64
 PORT = 5050
+''' generating random keyword for join message'''
+JOIN = ''.join([random.choice(string.ascii_uppercase) for _ in range(random.randrange(30,50))])
 '''  Socket obj for server '''
 SERVER = socket.gethostbyname(socket.gethostname())
 ADDR = (SERVER,PORT)
@@ -18,35 +21,35 @@ server.bind(ADDR)
 connections = {}
 
 ''' Sending messages to all connected users '''
-def sendtoall(msg,addr):
+def sendtoall(msg,addr,nickname):
 	if msg == DISCONNECT:
-		message = (f'User {addr} Disconnected !').encode(FORMAT)
+		message = (f'{nickname} Disconnected !').encode(FORMAT)
+	elif msg == JOIN:
+		message = (f'[JOINED] {nickname}').encode(FORMAT)
+	
 	else:
-		message = (f'[MESSAGE] {addr} : {msg}').encode(FORMAT)
+		message = (f'[MESSAGE] {nickname} : {msg}').encode(FORMAT)
 	msg_len = str(len(message)).encode(FORMAT)
 	msg_len += b' '*(HEADER - len(msg_len))
 	for addresses in connections:
 		if addresses != addr :
 			try:
-				connections[addresses].send(msg_len)
-				connections[addresses].send(message)
+				connections[addresses][0].send(msg_len)
+				connections[addresses][0].send(message)
 			except socket.error:
 				del connections[addresses]
 
 
 ''' Handling and showing clients messages ''' 
 def handle_client(conn,addr):
-	connections[addr] = conn
-	print(f'[JOINED] new user {addr}')
+	sendtoall(JOIN,addr,connections[addr][1])
 	connection = True
 	while connection:
 		msg_length = conn.recv(HEADER).decode(FORMAT)
 		if msg_length:
 			msg_length = int(msg_length)
 			msg = conn.recv(msg_length).decode(FORMAT)
-			print(f'[MESSAGE] {addr} : {msg}')
-			sendtoall(msg,addr)
-			
+			sendtoall(msg,addr,connections[addr][1])
 			if msg == DISCONNECT:
 				connection = False
 
@@ -62,11 +65,18 @@ def start():
 	print(f'[LISTENING] Server listening on  {SERVER}')
 	while True:
 		conn,addr = server.accept()
-		connections[addr] = conn
+		nick = conn.recv(256).decode(FORMAT)
+		connections[addr] = (conn,nick)
 		thread = threading.Thread(target=handle_client,args=(conn,addr))
+		print(f'[JOINED] {nick} join the  chat')
 		print(f'Current Connections : {threading.activeCount()}')
 		thread.start()
 
 		
-
-start()
+''' Handling Force exit and closing server '''
+try:
+	start()
+except KeyboardInterrupt:
+	server.shutdown(socket.SHUT_RDWR)
+	server.close()
+	print('Server Closed !')
