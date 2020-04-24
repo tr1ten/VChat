@@ -65,7 +65,7 @@ def rec_file(conn):
     with open(filename,'wb') as f:
         for _ in range(0,filesize,BUFFER):
             chunk = conn.recv(BUFFER)
-            if not chunk:
+            if not chunk or chunk.decode(FORMAT).strip() == 'COMPLETED':
                 break
             f.write(chunk)
 

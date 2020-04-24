@@ -60,9 +60,9 @@ def transfer_file(conn,name):
 		if not chunk:
 			break
 		sender.send(chunk)
+	send(sender,'COMPLETED')
+	print(sender, f'{name} : [FILE] {filename} ')
 	send(sender,f'{name} : [FILE] {filename} ')
-
-
 
 
 ''' Sending messages to all connected users '''
