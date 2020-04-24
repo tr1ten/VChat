@@ -60,14 +60,15 @@ def rec_file(conn):
     ln = conn.recv(HEADER).decode(FORMAT)
     ln = int(ln)
     recs = conn.recv(ln).decode(FORMAT)
-    filename,filesize = recs.split(SEPERATOR)
+    filename,filesize,nick = recs.split(SEPERATOR)
     filesize = int(filesize)
     with open(filename,'wb') as f:
         for _ in range(0,filesize,BUFFER):
             chunk = conn.recv(BUFFER)
-            if not chunk or chunk.decode(FORMAT).strip() == 'COMPLETED':
+            if not chunk:
                 break
             f.write(chunk)
+    print('\r' + f'{nick} : [Shared] {filename} '+'\nYou :')
 
 ''' recieving messages '''
 

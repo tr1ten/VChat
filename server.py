@@ -48,7 +48,7 @@ def transfer_file(conn,name):
 			sender = con[0]
 			print("Sending file to ",nick)
 			send(sender,'--R')
-			send(sender,filename+SEPERATOR+str(filesize))
+			send(sender,filename+SEPERATOR+str(filesize)+SEPERATOR+nick)
 			break
 	else:
 		print('user not found !')
@@ -59,10 +59,9 @@ def transfer_file(conn,name):
 		chunk = conn.recv(BUFFER)
 		if not chunk:
 			break
-		sender.send(chunk)
-	send(sender,'COMPLETED')
-	print(sender, f'{name} : [FILE] {filename} ')
-	send(sender,f'{name} : [FILE] {filename} ')
+		sender.sendall(chunk)
+
+	print(f'{name} : [FILE] {filename} ')
 
 
 ''' Sending messages to all connected users '''
