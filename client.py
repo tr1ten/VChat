@@ -7,7 +7,7 @@ import tqdm
 DISCONNECT = '!!F'
 FORMAT = 'utf-8'
 HEADER = 64
-BUFFER = 1024
+BUFFER = 4096
 ''' Port provided by ngrok '''
 PORT = int(input('PORT : '))
 ''' Setting ngrok server '''
@@ -37,6 +37,7 @@ def file_transfer():
                 break
             client.sendall(data)
             progress.update(len(data))
+    return 1
 
 ''' protocol for sending message to server'''
 def send(msg):
@@ -62,13 +63,16 @@ def rec_file(conn):
     recs = conn.recv(ln).decode(FORMAT)
     filename,filesize,nick = recs.split(SEPERATOR)
     filesize = int(filesize)
+    progress = tqdm.tqdm(range(filesize), f"Recieving {filename}", unit="B", unit_scale=True, unit_divisor=1024)
     with open(filename,'wb') as f:
-        for _ in range(0,filesize,BUFFER):
+        for _ in progress:
             chunk = conn.recv(BUFFER)
             if not chunk:
+                print('breaking.. ',chunk)
                 break
             f.write(chunk)
-    print('\r' + f'{nick} : [Shared] {filename} '+'\nYou :')
+            progress.update(len(chunk))
+    print('\r' + f'{nick} : [Shared] {filename} '+'\nYou :',end=' ')
 
 ''' recieving messages '''
 

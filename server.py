@@ -7,7 +7,7 @@ import tqdm
 
 ''' Initializing variables '''
 DISCONNECT = '!!F'
-BUFFER = 1024
+BUFFER = 4096
 FORMAT = 'utf-8'
 HEADER = 64
 PORT = 5050
@@ -48,18 +48,22 @@ def transfer_file(conn,name):
 			sender = con[0]
 			print("Sending file to ",nick)
 			send(sender,'--R')
-			send(sender,filename+SEPERATOR+str(filesize)+SEPERATOR+nick)
+			send(sender,filename+SEPERATOR+str(filesize)+SEPERATOR+name)
 			break
 	else:
 		print('user not found !')
 		conn.close()
 
 	filesize = int(filesize)
-	for _ in range(0,filesize,BUFFER):
+	progress = tqdm.tqdm(range(filesize), f"Sending {filename}", unit="B", unit_scale=True, unit_divisor=1024)
+	for _ in progress:
 		chunk = conn.recv(BUFFER)
 		if not chunk:
+			print('Breaking !')
 			break
 		sender.sendall(chunk)
+		progress.update(len(chunk))
+
 
 	print(f'{name} : [FILE] {filename} ')
 
@@ -75,13 +79,16 @@ def sendtoall(msg,addr,nickname):
 		message = (f'{nickname} : {msg}').encode(FORMAT)
 	msg_len = str(len(message)).encode(FORMAT)
 	msg_len += b' '*(HEADER - len(msg_len))
-	for addresses in connections:
-		if addresses != addr :
-			try:
-				connections[addresses][0].send(msg_len)
-				connections[addresses][0].send(message)
-			except socket.error:
-				del connections[addresses]
+	try:
+		for addresses in connections:
+			if addresses != addr :
+				try:
+					connections[addresses][0].send(msg_len)
+					connections[addresses][0].send(message)
+				except socket.error:
+					del connections[addresses]
+	except Exception:
+		print('Error while sending to all clients !')
 
 
 ''' Sending msg  '''
