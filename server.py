@@ -55,13 +55,17 @@ def transfer_file(conn,name):
 		conn.close()
 
 	filesize = int(filesize)
+	sent_size = 0
 	progress = tqdm.tqdm(range(filesize), f"Sending {filename}", unit="B", unit_scale=True, unit_divisor=1024)
 	for _ in progress:
+		if  sent_size >= filesize:
+			break
 		chunk = conn.recv(BUFFER)
 		if not chunk:
 			print('Breaking !')
 			break
 		sender.sendall(chunk)
+		sent_size += len(chunk)
 		progress.update(len(chunk))
 
 

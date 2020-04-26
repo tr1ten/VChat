@@ -61,18 +61,23 @@ def rec_file(conn):
     ln = conn.recv(HEADER).decode(FORMAT)
     ln = int(ln)
     recs = conn.recv(ln).decode(FORMAT)
-    filename,filesize,nick = recs.split(SEPERATOR)
+    filename,filesize,sent_by = recs.split(SEPERATOR)
     filesize = int(filesize)
+    sent_size = 0
     progress = tqdm.tqdm(range(filesize), f"Recieving {filename}", unit="B", unit_scale=True, unit_divisor=1024)
     with open(filename,'wb') as f:
         for _ in progress:
+            if sent_size >= filesize:
+                break
             chunk = conn.recv(BUFFER)
             if not chunk:
-                print('breaking.. ',chunk)
                 break
             f.write(chunk)
+            sent_size +=len(chunk)
             progress.update(len(chunk))
-    print('\r' + f'{nick} : [Shared] {filename} '+'\nYou :',end=' ')
+
+    progress.close()
+    print('\r' + f'{sent_by} : [Shared] {filename} '+'\nYou :',end=' ')
 
 ''' recieving messages '''
 
